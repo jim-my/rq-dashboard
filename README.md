@@ -28,6 +28,13 @@ You can also run the dashboard inside of docker:
 * run the following command:
 
   ``` {.console}
+  # 1. start redis server:
+  $ /opt/homebrew/bin/redis-server
+
+  # 2. update `RQ_DASHBOARD_REDIS_URL` accordingly(if there is no password, remove password from the URL)
+  $ vim docker-compose.yml
+
+  # 3. start server
   $ docker-compose up
   ```
 
