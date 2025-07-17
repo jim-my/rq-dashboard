@@ -10,6 +10,8 @@ from flask import Flask, Response, request
 from . import default_settings
 from .version import VERSION
 from .web import blueprint, setup_rq_connection
+from .web import config as service_config
+from rq.serializers import JSONSerializer
 
 
 def add_basic_auth(blueprint, username, password, realm="RQ Dashboard"):
@@ -150,9 +152,15 @@ def make_flask_app(config, username, password, url_prefix, compatibility_mode=Tr
     hidden=True,
     help="[DEPRECATED] Delete jobs instead of cancel",
 )
+@click.option(
+    "--disable-delete", is_flag=True, default=False, help="Disable delete jobs, clean up registries"
+)
 @click.option("--debug/--normal", default=False, help="Enter DEBUG mode")
 @click.option(
     "-v", "--verbose", is_flag=True, default=False, help="Enable verbose logging"
+)
+@click.option(
+    "-j", "--json", is_flag=True, default=False, help="Enable JSONSerializer"
 )
 def run(
     bind,
@@ -173,7 +181,9 @@ def run(
     web_background,
     debug,
     delete_jobs,
+    disable_delete,
     verbose,
+    json,
 ):
     """Run the RQ Dashboard Flask server.
 
@@ -192,10 +202,11 @@ def run(
     click.echo("RQ Dashboard version {}".format(VERSION))
     app = make_flask_app(config, username, password, url_prefix)
     app.config["DEPRECATED_OPTIONS"] = []
-    if redis_url:
-        app.config["RQ_DASHBOARD_REDIS_URL"] = redis_url
-    else:
-        app.config["RQ_DASHBOARD_REDIS_URL"] = "redis://127.0.0.1:6379"
+    if app.config.get("RQ_DASHBOARD_REDIS_URL") is None:
+        if redis_url:
+            app.config["RQ_DASHBOARD_REDIS_URL"] = redis_url
+        else:
+            app.config["RQ_DASHBOARD_REDIS_URL"] = "redis://127.0.0.1:6379"
     if redis_host:
         app.config["DEPRECATED_OPTIONS"].append("--redis-host")
     if redis_port:
@@ -246,6 +257,11 @@ def run(
             url,
         )
         app.config["RQ_DASHBOARD_REDIS_URL"] = url
+
+    app.config["RQ_DASHBOARD_DISABLE_DELETE"] = disable_delete
+
+    if json:
+        service_config.serializer = JSONSerializer
 
     setup_rq_connection(app)
     app.run(host=bind, port=port, debug=debug)

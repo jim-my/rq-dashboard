@@ -8,7 +8,7 @@
     var reload_job_info = function(done) {
         api.getJob({{ id|tojson|safe }}, function(job, err) {
             if (err) {
-                return done();
+                return;
             }
             onJobLoaded(job, done);
         });
@@ -20,12 +20,17 @@
         $job_data.empty();
 
         job.created_at = toRelative(Date.create(job.created_at)) + ' / ' + toShort(Date.create(job.created_at));
-        if (job.enqueued_at !== undefined) {
+        if (job.enqueued_at !== null) {
             job.enqueued_at = toRelative(Date.create(job.enqueued_at)) + ' / ' + toShort(Date.create(job.enqueued_at));
+        } else {
+            job.enqueued_at = '-'
         }
-        if (job.ended_at !== undefined) {
+        if (job.ended_at !== null) {
             job.ended_at = toRelative(Date.create(job.ended_at)) + ' / ' + toShort(Date.create(job.ended_at));
+        } else {
+            job.ended_at = '-'
         }
+
         if (job.status === "failed") {
             $("#requeue-job-btn").show()
         }

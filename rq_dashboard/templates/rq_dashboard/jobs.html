@@ -19,17 +19,28 @@
         </div>
         <select class="custom-select" id="select-registry" title="Registry name">
             <option {% if registry_name == 'queued' %} selected {% endif %}>queued</option>
+            <option {% if registry_name == 'scheduled' %} selected {% endif %}>scheduled</option>
             <option {% if registry_name == 'deferred' %} selected {% endif %}>deferred</option>
             <option {% if registry_name == 'started' %} selected {% endif %}>started</option>
             <option {% if registry_name == 'finished' %} selected {% endif %}>finished</option>
             <option {% if registry_name == 'failed' %} selected {% endif %}>failed</option>
-        </select> 
+            <option {% if registry_name == 'canceled' %} selected {% endif %}>canceled</option>
+        </select>
+        <div class="input-group-prepend input-group-append">
+            <span class="input-group-text">Sort Order:</span>
+        </div>
+        <select class="custom-select" id="select-sort-order" title="Job Sort Order">
+            <option {% if order == 'asc' %} selected {% endif %} value="asc">Ascending</option>
+            <option {% if order == 'dsc' %} selected {% endif %} value="dsc">Descending</option>
+        </select>
     </div>
 
     <p class="intro">
+        {% if enable_delete %}
         <a href="{{ url_for('rq_dashboard.empty_queue', queue_name=queue.name, registry_name=registry_name) }}" id="empty-btn"
             class="btn btn-outline-danger btn-sm" style="float: right" data-toggle="tooltip"
             title="Remove all jobs from this queue (<b>destructive</b>)" data-html=true>Empty queue</a>
+        {% endif %}
         {% if registry_name == 'queued' %}
         <a href="{{ url_for('rq_dashboard.compact_queue', queue_name=queue.name) }}" id="compact-btn"
             class="btn btn-outline-success btn-sm" style="float: right; margin-right: 8px;" data-toggle="tooltip"
@@ -39,8 +50,7 @@
         <a href="{{ url_for('rq_dashboard.requeue_all', queue_name=queue.name) }}" id="requeue-all-btn" class="btn btn-outline-warning btn-sm"
             style="float: right; margin-right: 8px;">Requeue All</a>
         {% endif %}
-        This list below contains all the queued jobs on queue <strong>{{ queue.name }}</strong>, sorted by
-        age (oldest on top).</p>
+        This list below contains all the queued jobs on queue <strong>{{ queue.name }}</strong>.</p>
 
         <div class="table-responsive">
             <table id="jobs" class="table table-bordered">
@@ -74,7 +84,9 @@
                 <% if (d.exc_info) { %>
                 <a href="#" data-role="requeue-job-btn" class="btn btn-outline-warning btn-sm btn-block">Requeue</a>
                 <% } %>
+                {% if enable_delete %}
                 <a href="#" data-role="delete-job-btn" class="btn btn-outline-danger btn-sm">Delete</a>
+                {% endif %}
             </td>
         </tr>
     </script>
